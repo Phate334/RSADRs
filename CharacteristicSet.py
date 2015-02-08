@@ -20,7 +20,7 @@ connect_information = "Trusted_Connection=yes;driver={SQL Server};server=localho
 source_database = "LAN_PREDATA"
 destination_database = "RSADRs"
 CREATE_TABLE = "CREATE TABLE %s (ISR varchar(20),CASES varchar(max));"
-DROP_TABLE = "DROP TABLE %s"
+DROP_TABLE = "DROP TABLE %s;"
 AGE_TYPE = ["~5", "18~60", "60~"]
 GENDER_TYPE = ["Male", "Female"]
 LOG_DIR = "D:\\log\\"
@@ -42,18 +42,14 @@ class CharacteristicThread(threading.Thread):
             self.table = self.queue.get(block=True)
             self.season = self.table[2:]
             print("start process table %s"%(self.table))
-            self.create_table()
-            # pull this season data into ram.
-            with pyodbc.connect(connect_information, database=source_database) as con:
-                with con.cursor() as cursor:
-                    rows = cursor.execute("SELECT ISR,age,gender,drug,PT FROM %s"%(self.table))
-                    temp = {}
-                    for isr, age, gender, drug, PT in rows:
-                        if age not in AGE_TYPE:
-                            age = None
-                        if gender not in GENDER_TYPE:
-                            gender = None
-                        temp[isr] = (age, gender, drug, PT)
+            try:
+                self.create_table()
+                src_data = self.pull_data()
+                print len(src_data)
+            except:
+                print("%s fail create,try to drop them."%(self.season))
+                self.drop_table()
+            self.queue.task_done()
 
     def similarity(self):
         """Lost case.
@@ -65,21 +61,32 @@ class CharacteristicThread(threading.Thread):
         """
         pass
 
-    def create_table(self):
-        try:
-            with pyodbc.connect(connect_information, database=destination_database) as con:
-                with con.cursor() as cursor:
-                    cursor.execute(CREATE_TABLE % ("similarity_global_"+self.season))
-                    cursor.execute(CREATE_TABLE % ("similarity_age_"+self.season))
-                    cursor.execute(CREATE_TABLE % ("similarity_gender_"+self.season))
-                    cursor.execute(CREATE_TABLE % ("tolerance_global_"+self.season))
-                    cursor.execute(CREATE_TABLE % ("tolerance_age_"+self.season))
-                    cursor.execute(CREATE_TABLE % ("tolerance_gender_"+self.season))
-                    cursor.commit()
-        except:
-            print("pass")
+    def pull_data(self):  # pull this season data into ram.
+        with pyodbc.connect(connect_information, database=source_database) as con:
+            with con.cursor() as cursor:
+                rows = cursor.execute("SELECT ISR,age,gender,drug,PT FROM %s"%(self.table))
+                temp = {}
+                for isr, age, gender, drug, PT in rows:
+                    if age not in AGE_TYPE:
+                        age = None
+                    if gender not in GENDER_TYPE:
+                        gender = None
+                    temp[isr] = (age, gender, drug, PT)
+        return temp
 
-    def drop_table(self):
+    def create_table(self):  # Create table by season
+        with pyodbc.connect(connect_information, database=destination_database) as con:
+            with con.cursor() as cursor:
+                cursor.execute(CREATE_TABLE % ("similarity_global_"+self.season))
+                cursor.execute(CREATE_TABLE % ("similarity_age_"+self.season))
+                cursor.execute(CREATE_TABLE % ("similarity_gender_"+self.season))
+                cursor.execute(CREATE_TABLE % ("tolerance_global_"+self.season))
+                cursor.execute(CREATE_TABLE % ("tolerance_age_"+self.season))
+                cursor.execute(CREATE_TABLE % ("tolerance_gender_"+self.season))
+                cursor.commit()
+
+
+    def drop_table(self):  # Drop table if fail to create it.
         try:
             with pyodbc.connect(connect_information, database=destination_database) as con:
                 with con.cursor() as cursor:
@@ -91,7 +98,7 @@ class CharacteristicThread(threading.Thread):
                     cursor.execute(DROP_TABLE % ("tolerance_gender_"+self.season))
                     cursor.commit()
         except:
-            print("pass")
+            print("please check %s in database"%(self.season))
 
 
 def main():
@@ -102,6 +109,11 @@ def main():
             for r, in rows:
                 tables_queue.put(r)
                 season = r[2:]
+    for i in range(5):
+        t = CharacteristicThread(tables_queue)
+        t.setDaemon(True)
+        t.start()
+    tables_queue.join()
 
 if __name__ == "__main__":
     main()
