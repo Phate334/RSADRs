@@ -2,7 +2,7 @@
 # -------------------------------------------------------------------------------
 # Name:          CharacteristicSet
 # Purpose:       Preparing Data for analysis step by characteristic relation.
-# Source pre-data is combined as follows FAERS tables:
+#                Source pre-data is combined as follows FAERS tables:
 #                DEMO:Patient's basic information contain fields like id,age and gender.
 #                DRUG:Drugs used in each case.
 #                REAC:Symptoms which is produced from DRUG table.
@@ -12,24 +12,38 @@
 # Copyright:    (c) Phate 2015
 # Licence:        <your licence>
 # -------------------------------------------------------------------------------
+import threading
+import Queue
 import pyodbc
 
+connect_infomation = "Trusted_Connection=yes;driver={SQL Server};server=localhost"
+source_database = "LAN_PREDATA"
+destination_database = "RSADRs"
 
-class CharacteristicSet:
-    def __init__(self, connectInfo):
-        self.conInfo = connectInfo
-        with pyodbc.connect(self.conInfo) as con:
-            with con.cursor() as cursor:
-                rows = cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.Tables")
-                self.tables = [r for r, in rows]
 
-    def test(self):
-        print self.tables
+class CharacteristicThread(threading.Thread):
+    """Define a thread to process predata from FAERS database.
+    Args:
+        queue: already process srouce tables.
+    """
+    def __init__(self,queue):
+        pass
+
+
+def similarity():
+    """Lost case.
+    """
+    pass
+
+
+def tolerance():
+    """Don't care case.
+    """
+    pass
 
 
 def main():
-    cs = CharacteristicSet("Trusted_Connection=yes;driver={SQL Server};server=localhost;database=LAN_PREDATA")
-    cs.test()
+    pass
 
 
 if __name__ == "__main__":
