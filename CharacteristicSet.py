@@ -29,7 +29,7 @@ LOG_DIR = "D:\\log\\"
 class CharacteristicThread(threading.Thread):
     """Define a thread to process predata from FAERS database.
     Args:
-        queue: already process srouce tables.
+        queue: ready process source tables.
     """
     def __init__(self, queue):
         threading.Thread.__init__(self)
@@ -107,7 +107,7 @@ def main():
             for r, in rows:
                 tables_queue.put(r)
                 season = r[2:]
-    for i in range(5):
+    for i in range(5):  # create 5 thread,and pull target table from queue.
         t = CharacteristicThread(tables_queue)
         t.setDaemon(True)
         t.start()
