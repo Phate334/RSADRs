@@ -43,12 +43,10 @@ class CharacteristicThread(threading.Thread):
             self.season = self.table[2:]
             print("start process table %s"%(self.table))
             try:  # if fail create table, then drop all.
-                self.create_table()
                 src_data = self.pull_data(self.table)
                 print len(src_data)
             except:
                 print("%s fail create,try to drop them."%(self.season))
-                self.drop_table()
             self.queue.task_done()
 
     def pull_data(self, table_name):  # pull this season data into ram.
