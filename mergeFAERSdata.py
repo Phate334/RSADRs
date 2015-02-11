@@ -19,8 +19,7 @@ source_database = "LAN_PREDATA"
 destination_database = "RSADRs"
 AGE_TYPE = ["~5", "18~60", "60~"]
 GENDER_TYPE = ["Male", "Female"]
-CREATE_TABLE = "CREATE TABLE %s (ISR varchar(20),CASES varchar(max));"
-INSERT_DATA = "INSERT INTO totalFAERS (ISR,age,gender,drug,PT) VALUES('%s','%s','%s','%s','%s')"
+INSERT_DATA = "INSERT INTO totalFAERS (ISR,season,age,gender,drug,PT) VALUES(%d,'%s','%s','%s','%s','%s')"
 LOG_DIR = "D:\\log\\"
 
 
@@ -50,10 +49,10 @@ class UpdateTableThread(threading.Thread):
                     age = "NULL"
                 if gender not in GENDER_TYPE:
                     gender = "NULL"
-                isr += "@"+self.season
+                isr = int(isr)
                 drug = drug.replace("'", "''")
                 PT = PT.replace("'", "''")
-                descursor.execute(INSERT_DATA%(isr, age, gender, drug, PT))
+                descursor.execute(INSERT_DATA % (isr, self.season, age, gender, drug, PT))
             descursor.commit()
             descursor.close()
             srccursor.close()
@@ -62,19 +61,8 @@ class UpdateTableThread(threading.Thread):
             self.queue.task_done()
 
 
-def create_table():  # Create table
-    with pyodbc.connect(connect_information, database=destination_database) as con:
-        with con.cursor() as cursor:
-            cursor.execute(CREATE_TABLE % ("similarity_global"))
-            cursor.execute(CREATE_TABLE % ("similarity_age"))
-            cursor.execute(CREATE_TABLE % ("similarity_gender"))
-            cursor.execute(CREATE_TABLE % ("tolerance_global"))
-            cursor.execute(CREATE_TABLE % ("tolerance_age"))
-            cursor.execute(CREATE_TABLE % ("tolerance_gender"))
-            cursor.commit()
-
-
 def main():
+    # get table name, and put in queue.
     tables_queue = Queue.Queue()
     with pyodbc.connect(connect_information, database=source_database) as con:
         with con.cursor() as cursor:
@@ -86,7 +74,6 @@ def main():
         t.setDaemon(True)
         t.start()
     tables_queue.join()
-    raw_input(">>")
 
 
 if __name__ == "__main__":

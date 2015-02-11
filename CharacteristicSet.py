@@ -13,54 +13,61 @@
 # Licence:        <your licence>
 # -------------------------------------------------------------------------------
 import threading
-import Queue
 import pyodbc
 
 connect_information = "Trusted_Connection=yes;driver={SQL Server};server=localhost"
 source_database = "LAN_PREDATA"
 destination_database = "RSADRs"
-CREATE_TABLE = "CREATE TABLE %s (ISR varchar(20),CASES varchar(max));"
+CREATE_SET_TABLE = "CREATE TABLE %s (ISR bigint,CASES varchar(max));"
+CREATE_TOTAL_TABLE = "CREATE TABLE %s " \
+                     "(ISR bigint,age varchar(10),gender varchar(10),drug varchar(max),PT varchar(max))"
 DROP_TABLE = "DROP TABLE %s;"
 AGE_TYPE = ["~5", "18~60", "60~"]
 GENDER_TYPE = ["Male", "Female"]
 LOG_DIR = "D:\\log\\"
 
+source_data = {}
+
+
+def create_table():  # Create table
+    with pyodbc.connect(connect_information, database=destination_database) as con:
+        with con.cursor() as cursor:
+            cursor.execute(CREATE_SET_TABLE % ("similarity_global"))
+            cursor.execute(CREATE_SET_TABLE % ("similarity_age"))
+            cursor.execute(CREATE_SET_TABLE % ("similarity_gender"))
+            cursor.execute(CREATE_SET_TABLE % ("tolerance_global"))
+            cursor.execute(CREATE_SET_TABLE % ("tolerance_age"))
+            cursor.execute(CREATE_SET_TABLE % ("tolerance_gender"))
+            cursor.execute(CREATE_TOTAL_TABLE % ("totalFAERS"))
+            cursor.commit()
+
+
+def pull_data():  # pull data　into.
+    with pyodbc.connect(connect_information, database=destination_database) as con:
+        with con.cursor() as cursor:
+            rows = cursor.execute("SELECT ISR,season,age,gender,drug,PT FROM totalFAERS")
+            temp = {}
+            for isr, season, age, gender, drug, PT in rows:
+                if age not in AGE_TYPE:
+                    age = None
+                if gender not in GENDER_TYPE:
+                    gender = None
+                print(season+"\r"),
+                temp[isr] = (age, season, gender, drug, PT)
+    return temp
+
 
 class CharacteristicThread(threading.Thread):
     """Define a thread to process predata from FAERS database.
     Args:
-        queue: ready process source tables.
+
     """
-    def __init__(self, queue):
+    def __init__(self):
         threading.Thread.__init__(self)
-        self.queue = queue
-        self.table = None
-        self.season = None
 
     def run(self):
-        while True:
-            self.table = self.queue.get(block=True)
-            self.season = self.table[2:]
-            print("start process table %s"%(self.table))
-            try:  # if fail create table, then drop all.
-                src_data = self.pull_data(self.table)
-                print len(src_data)
-            except:
-                print("%s fail create,try to drop them."%(self.season))
-            self.queue.task_done()
+        print(len(source_data))
 
-    def pull_data(self, table_name):  # pull this season data into ram.
-        with pyodbc.connect(connect_information, database=source_database) as con:
-            with con.cursor() as cursor:
-                rows = cursor.execute("SELECT ISR,age,gender,drug,PT FROM %s"%(table_name))
-                temp = {}
-                for isr, age, gender, drug, PT in rows:
-                    if age not in AGE_TYPE:
-                        age = None
-                    if gender not in GENDER_TYPE:
-                        gender = None
-                    temp[isr] = (age, gender, drug, PT)
-        return temp
     def similarity(self):
         """Lost case.
         """
@@ -71,46 +78,16 @@ class CharacteristicThread(threading.Thread):
         """
         pass
 
-    def create_table(self):  # Create table by season
-        with pyodbc.connect(connect_information, database=destination_database) as con:
-            with con.cursor() as cursor:
-                cursor.execute(CREATE_TABLE % ("similarity_global_"+self.season))
-                cursor.execute(CREATE_TABLE % ("similarity_age_"+self.season))
-                cursor.execute(CREATE_TABLE % ("similarity_gender_"+self.season))
-                cursor.execute(CREATE_TABLE % ("tolerance_global_"+self.season))
-                cursor.execute(CREATE_TABLE % ("tolerance_age_"+self.season))
-                cursor.execute(CREATE_TABLE % ("tolerance_gender_"+self.season))
-                cursor.commit()
-
-    def drop_table(self):  # Drop table if fail to create it.
-        try:
-            with pyodbc.connect(connect_information, database=destination_database) as con:
-                with con.cursor() as cursor:
-                    cursor.execute(DROP_TABLE % ("similarity_global_"+self.season))
-                    cursor.execute(DROP_TABLE % ("similarity_age_"+self.season))
-                    cursor.execute(DROP_TABLE % ("similarity_gender_"+self.season))
-                    cursor.execute(DROP_TABLE % ("tolerance_global_"+self.season))
-                    cursor.execute(DROP_TABLE % ("tolerance_age_"+self.season))
-                    cursor.execute(DROP_TABLE % ("tolerance_gender_"+self.season))
-                    cursor.commit()
-        except:
-            print("please check %s in database"%(self.season))
-
 
 def main():
-    tables_queue = Queue.Queue()  # ready to process data.
-    with pyodbc.connect(connect_information, database=source_database) as con:
-        with con.cursor() as cursor:
-            rows = cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.Tables")
-            for r, in rows:
-                tables_queue.put(r)
-                season = r[2:]
-    for i in range(5):  # create 5 thread,and pull target table from queue.
-        t = CharacteristicThread(tables_queue)
+    global source_data
+    source_data = pull_data()
+    threads = [CharacteristicThread() for i in range(5)]
+    for t in threads:
         t.setDaemon(True)
         t.start()
-    tables_queue.join()
-    raw_input(">>")
+    while threading.active_count() > 1:
+        pass
 
 if __name__ == "__main__":
     main()
