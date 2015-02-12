@@ -14,7 +14,7 @@
 # -------------------------------------------------------------------------------
 import threading
 import pyodbc
-
+# static information define.
 connect_information = "Trusted_Connection=yes;driver={SQL Server};server=localhost"
 source_database = "LAN_PREDATA"
 destination_database = "RSADRs"
@@ -24,6 +24,13 @@ CREATE_TOTAL_TABLE = "CREATE TABLE %s " \
 AGE_TYPE = ["~5", "18~60", "60~"]
 GENDER_TYPE = ["Male", "Female"]
 LOG_DIR = "D:\\log\\"
+# characteristic type
+SIMILARITY_GLOBAL = 1
+SIMILARITY_AGE = 2
+SIMILARITY_GENDER = 3
+TOLERANCE_GLOBAL = 4
+TOLERANCE_AGE = 5
+TOLERANCE_GENDER = 6
 source_data = {}  # pull data from database.
 
 
@@ -63,21 +70,21 @@ class CharacteristicThread(threading.Thread):
                and because we focus on two attributes-age and gender,so there are two cases we need to consider.
                Final,we have six cases need to process.
     """
-    CHARACTERISTIC_TYPE = {1: ("similarity", "global"),
-                           2: ("similarity", "age"),
-                           3: ("similarity", "gender"),
-                           4: ("tolerance", "global"),
-                           5: ("tolerance", "age"),
-                           6: ("tolerance", "gender")}
+    CHARACTERISTIC_TYPE = {SIMILARITY_GLOBAL: ("similarity", "global"),
+                           SIMILARITY_AGE: ("similarity", "age"),
+                           SIMILARITY_GENDER: ("similarity", "gender"),
+                           TOLERANCE_GLOBAL: ("tolerance", "global"),
+                           TOLERANCE_AGE: ("tolerance", "age"),
+                           TOLERANCE_GENDER: ("tolerance", "gender")}
 
     def __init__(self, ctype):
         threading.Thread.__init__(self)
         if ctype < 1 or ctype > 6:
             raise AttributeError("bad input, please check the type define.")
-        self.cas, self.attr = self.CHARACTERISTIC_TYPE[ctype]
+        self.relation, self.attr = self.CHARACTERISTIC_TYPE[ctype]
 
     def run(self):
-        print(self.cas + "_" + self.attr)
+        print(self.relation + "_" + self.attr)
 
     def similarity(self):
         """Lost case.
