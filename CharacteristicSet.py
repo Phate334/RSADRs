@@ -14,6 +14,7 @@
 # -------------------------------------------------------------------------------
 import threading
 import pyodbc
+
 # static information define.
 connect_information = "Trusted_Connection=yes;driver={SQL Server};server=localhost"
 source_database = "LAN_PREDATA"
@@ -32,6 +33,7 @@ TOLERANCE_GLOBAL = 4
 TOLERANCE_AGE = 5
 TOLERANCE_GENDER = 6
 source_data = {}  # pull data from database.
+isrs = None
 
 
 def create_table():  # Create table
@@ -64,6 +66,7 @@ def pull_data():  # pull data　into.
 
 class CharacteristicThread(threading.Thread):
     """Define a thread to process predata from FAERS database.
+
     Args:
         ctype: type of this thread will process,
                it's about characteristic(similarity or tolerance) and attribute (global or local),
@@ -84,7 +87,14 @@ class CharacteristicThread(threading.Thread):
         self.relation, self.attr = self.CHARACTERISTIC_TYPE[ctype]
 
     def run(self):
-        print(self.relation + "_" + self.attr)
+        """
+
+        :return:
+        """
+        print(self.relation + "_" + self.attr),
+        for y in isrs:
+            for x in isrs:
+                pass
 
     def similarity(self):
         """Lost case.
@@ -98,9 +108,10 @@ class CharacteristicThread(threading.Thread):
 
 
 def main():
-    global source_data
-    # source_data = pull_data()
-    threads = [CharacteristicThread(i) for i in range(1,7)]
+    global source_data,isrs
+    source_data = pull_data()
+    isrs = source_data.keys()
+    threads = [CharacteristicThread(i) for i in range(1, 7)]
     for t in threads:
         t.setDaemon(True)
         t.start()

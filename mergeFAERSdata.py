@@ -77,5 +77,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
     print("check parameters in file begin,and put target data into queue.")
