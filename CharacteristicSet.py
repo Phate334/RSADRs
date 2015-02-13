@@ -15,6 +15,8 @@
 import threading
 import pyodbc
 
+from fu_timer import timer_seconds
+
 # static information define.
 connect_information = "Trusted_Connection=yes;driver={SQL Server};server=localhost"
 source_database = "LAN_PREDATA"
@@ -87,11 +89,11 @@ class CharacteristicThread(threading.Thread):
         self.relation, self.attr = self.CHARACTERISTIC_TYPE[ctype]
 
     def run(self):
+        """Thread of calculating characteristic set.
+        There is some define of two characteristic relations.
+        Similarity set:
         """
-
-        :return:
-        """
-        print(self.relation + "_" + self.attr),
+        print(self.relation + "_" + self.attr)
         for y in isrs:
             for x in isrs:
                 pass
@@ -107,6 +109,7 @@ class CharacteristicThread(threading.Thread):
         pass
 
 
+@timer_seconds
 def main():
     global source_data,isrs
     source_data = pull_data()
