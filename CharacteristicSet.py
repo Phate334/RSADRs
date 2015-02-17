@@ -70,7 +70,7 @@ def pull_data():  # pull data　into.
     return temp
 
 
-def find_characteristic_set(ctype, connect_info=connect_information, db=destination_database, src_table="totalFAERS"):
+def find_characteristic_set(ctype, data, connect_info=connect_information, db=destination_database, src_table="totalFAERS"):
     """calculating characteristic set.
     This method is calculating every case y and other case x which accord the relationship.
     Args:
@@ -83,6 +83,7 @@ def find_characteristic_set(ctype, connect_info=connect_information, db=destinat
         raise AttributeError("bad input, please check the type define.")
     characteristic, attribute = CHARACTERISTIC_TYPE[ctype]
     print(characteristic + "_" + attribute)
+
 
 
 def similarity():
@@ -99,12 +100,13 @@ def tolerance():
 
 @timer_seconds
 def main():
-    # processes = []
-    # for i in range(1,7):
-    #     p = mp.Process(target=find_characteristic_set, args=(i,))
-    d = mp.Manager().dict()
-    d[1] = "123"
-    print d.keys()
+    srcdata = mp.Manager().dict()
+    processes = []
+    for i in range(1, 7):
+        p = mp.Process(target=find_characteristic_set, args=(i, srcdata))
+        p.start()
+    for p in processes:
+        p.join()
 
 
 if __name__ == "__main__":
