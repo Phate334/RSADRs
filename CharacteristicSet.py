@@ -12,7 +12,7 @@
 # Copyright:    (c) Phate 2015
 # Licence:        <your licence>
 # -------------------------------------------------------------------------------
-import multiprocessing as mp
+from multiprocessing import Manager, Process
 import pyodbc
 
 from fu_timer import timer_seconds
@@ -85,7 +85,8 @@ def find_characteristic_set(ctype, data,
         raise AttributeError("bad input, please check the type define.")
     characteristic, attribute = CHARACTERISTIC_TYPE[ctype]
     print(characteristic + "_" + attribute + "("+str(len(data)))
-    # print(str(data[ctype*100]))
+    ks = data.keys()
+    print(str(data[ks[ctype*10]]))
 
 
 def similarity():
@@ -101,14 +102,14 @@ def tolerance():
 
 
 def main():
-    srcdata = mp.Manager().dict()
-    p = mp.Process(target=pull_data, args=(srcdata, "test_data"))
-    p.start()
-    p.join()
+    man = Manager()
+    srcdata = man.dict()
+    pull_data(srcdata, "test_data")
     processes = []
     for i in range(1, 7):
-        p = mp.Process(target=find_characteristic_set, args=(i, srcdata))
+        p = Process(target=find_characteristic_set, args=(i, srcdata))
         p.start()
+        processes.append(p)
     for p in processes:
         p.join()
 
