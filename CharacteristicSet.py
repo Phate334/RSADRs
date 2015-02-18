@@ -54,12 +54,14 @@ def create_table():  # Create table
             cursor.execute(CREATE_TOTAL_TABLE % "totalFAERS")
             cursor.commit()
 
-
-def pull_data():  # pull data　into.
+@timer_seconds
+def pull_data(temp, target="totalFAERS"):
+    """pull data from database to dictionary.
+    :return:multiprocess.Manager().dict()
+    """
     with pyodbc.connect(connect_information, database=destination_database) as con:
         with con.cursor() as cursor:
-            rows = cursor.execute("SELECT ISR,season,age,gender,drug,PT FROM totalFAERS")
-            temp = {}
+            rows = cursor.execute("SELECT ISR,season,age,gender,drug,PT FROM %s" % target)
             for isr, season, age, gender, drug, PT in rows:
                 if age not in AGE_TYPE:
                     age = None
@@ -67,10 +69,10 @@ def pull_data():  # pull data　into.
                     gender = None
                 print(season+"\r"),
                 temp[isr] = (age, season, gender, drug, PT)
-    return temp
 
 
-def find_characteristic_set(ctype, data, connect_info=connect_information, db=destination_database, src_table="totalFAERS"):
+def find_characteristic_set(ctype, data,
+                            connect_info=connect_information, db=destination_database, src_table="totalFAERS"):
     """calculating characteristic set.
     This method is calculating every case y and other case x which accord the relationship.
     Args:
@@ -82,8 +84,8 @@ def find_characteristic_set(ctype, data, connect_info=connect_information, db=de
     if ctype < 1 or ctype > 6:
         raise AttributeError("bad input, please check the type define.")
     characteristic, attribute = CHARACTERISTIC_TYPE[ctype]
-    print(characteristic + "_" + attribute)
-
+    print(characteristic + "_" + attribute + "("+str(len(data)))
+    # print(str(data[ctype*100]))
 
 
 def similarity():
@@ -98,9 +100,11 @@ def tolerance():
     pass
 
 
-@timer_seconds
 def main():
     srcdata = mp.Manager().dict()
+    p = mp.Process(target=pull_data, args=(srcdata, "test_data"))
+    p.start()
+    p.join()
     processes = []
     for i in range(1, 7):
         p = mp.Process(target=find_characteristic_set, args=(i, srcdata))
