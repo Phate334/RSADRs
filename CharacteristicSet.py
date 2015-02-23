@@ -54,7 +54,6 @@ def create_table():  # Create table
             cursor.execute(CREATE_TOTAL_TABLE % "totalFAERS")
             cursor.commit()
 
-@timer_seconds
 def pull_data(temp, target="totalFAERS"):
     """pull data from database to dictionary.
     :return:multiprocess.Manager().dict()
@@ -71,6 +70,7 @@ def pull_data(temp, target="totalFAERS"):
                 temp[isr] = (age, season, gender, drug, PT)
 
 
+@timer_seconds
 def find_characteristic_set(ctype, data,
                             connect_info=connect_information, db=destination_database, src_table="totalFAERS"):
     """calculating characteristic set.
@@ -85,12 +85,14 @@ def find_characteristic_set(ctype, data,
         raise AttributeError("bad input, please check the type define.")
     characteristic, attribute = CHARACTERISTIC_TYPE[ctype]
     print(characteristic + "_" + attribute + "("+str(len(data))+")")
+    total = len(data) * len(data)
     ks = data.keys()
     count = 0
     for y in ks:
         for x in ks:
             count += 1
-        print(characteristic + "_" + attribute + "("+str(len(data))+")" + str(count))
+        print("%s_%s(%.2f)" % (characteristic, attribute, float(count)/float(total)))
+        print("("+str(len(data))+")" + str(count))
 
 
 def similarity():
