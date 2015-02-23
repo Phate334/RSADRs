@@ -84,9 +84,13 @@ def find_characteristic_set(ctype, data,
     if ctype < 1 or ctype > 6:
         raise AttributeError("bad input, please check the type define.")
     characteristic, attribute = CHARACTERISTIC_TYPE[ctype]
-    print(characteristic + "_" + attribute + "("+str(len(data)))
+    print(characteristic + "_" + attribute + "("+str(len(data))+")")
     ks = data.keys()
-    print(str(data[ks[ctype*10]]))
+    count = 0
+    for y in ks:
+        for x in ks:
+            count += 1
+        print(characteristic + "_" + attribute + "("+str(len(data))+")" + str(count))
 
 
 def similarity():
@@ -104,7 +108,8 @@ def tolerance():
 def main():
     man = Manager()
     srcdata = man.dict()
-    pull_data(srcdata, "test_data")
+    # pull_data(srcdata, "test_data")
+    pull_data(srcdata)
     processes = []
     for i in range(1, 7):
         p = Process(target=find_characteristic_set, args=(i, srcdata))
