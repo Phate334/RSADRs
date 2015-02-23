@@ -92,7 +92,6 @@ def find_characteristic_set(ctype, data,
         for x in ks:
             count += 1
         print("%s_%s(%.2f)" % (characteristic, attribute, float(count)/float(total)))
-        print("("+str(len(data))+")" + str(count))
 
 
 def similarity():
