@@ -54,9 +54,12 @@ def create_table():  # Create table
             cursor.execute(CREATE_TOTAL_TABLE % "totalFAERS")
             cursor.commit()
 
+
 def pull_data(temp, target="totalFAERS"):
     """pull data from database to dictionary.
-    :return:multiprocess.Manager().dict()
+    Args:
+        temp: multiprocessing.Manager().dict()
+        target: which table you want read from destination_database.
     """
     with pyodbc.connect(connect_information, database=destination_database) as con:
         with con.cursor() as cursor:
@@ -67,7 +70,7 @@ def pull_data(temp, target="totalFAERS"):
                 if gender not in GENDER_TYPE:
                     gender = None
                 print(season+"\r"),
-                temp[isr] = (age, season, gender, drug, PT)
+                temp[isr] = (age, gender, season, drug, PT)
 
 
 @timer_seconds
@@ -77,9 +80,9 @@ def find_characteristic_set(ctype, data,
     This method is calculating every case y and other case x which accord the relationship.
     Args:
         ctype: type of this thread will process,
-               it's about characteristic(similarity or tolerance) and attribute (global or local),
-               and because we focus on two attributes-age and gender,so there are three cases we need to consider.
-               Final,we have six cases need to process.It's all define in this py file first.
+               it's about characteristic(similarity or tolerance) and attribute (global or local).
+               In local case,we focus on two attributes-age and gender,so there are three cases need to consider.
+               So we have six cases need to process.It's all define in this py file first.
     """
     if ctype < 1 or ctype > 6:
         raise AttributeError("bad input, please check the type define.")
@@ -94,14 +97,23 @@ def find_characteristic_set(ctype, data,
         print("%s_%s(%.2f)" % (characteristic, attribute, float(count)/float(total)))
 
 
-def similarity():
+def similarity(y_attr, x_attr):
     """Lost case.
+    Args:
+        y_attr: main case.
+        x_attr: secondary case, it compare to case y.
+    :return: True, if x and y have similarity relation.
     """
+
     pass
 
 
-def tolerance():
+def tolerance(y_attr, x_attr):
     """Don't care case.
+    Args:
+        y_attr: main case.
+        x_attr: secondary case, it compare to case y.
+    :return: True, if x and y have tolerance relation.
     """
     pass
 
