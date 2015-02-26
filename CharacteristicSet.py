@@ -99,13 +99,17 @@ def find_characteristic_set(ctype, data,
 
 def similarity(y_attr, x_attr):
     """Lost case.
+    Input two list which you want to compare fields.
     Args:
         y_attr: main case.
         x_attr: secondary case, it compare to case y.
     :return: True, if x and y have similarity relation.
     """
-
-    pass
+    for i in range(len(y_attr)):
+        if y_attr[i]:
+            if y_attr[i] != x_attr[i]:
+                return False
+    return True
 
 
 def tolerance(y_attr, x_attr):
@@ -115,7 +119,11 @@ def tolerance(y_attr, x_attr):
         x_attr: secondary case, it compare to case y.
     :return: True, if x and y have tolerance relation.
     """
-    pass
+    for i in range(len(y_attr)):
+        if y_attr[i] and x_attr[i]:
+            if y_attr[i] != x_attr[i]:
+                return False
+    return True
 
 
 def main():
