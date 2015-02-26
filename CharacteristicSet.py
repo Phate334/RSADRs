@@ -94,7 +94,6 @@ def find_characteristic_set(ctype, data,
     for y in ks:
         for x in ks:
             count += 1
-        print("%s_%s(%.2f)" % (characteristic, attribute, float(count)/float(total)))
 
 
 def similarity(y_attr, x_attr):
@@ -129,8 +128,8 @@ def tolerance(y_attr, x_attr):
 def main():
     man = Manager()
     srcdata = man.dict()
-    # pull_data(srcdata, "test_data")
-    pull_data(srcdata)
+    pull_data(srcdata, "test_data")
+    # pull_data(srcdata)
     processes = []
     for i in range(1, 7):
         p = Process(target=find_characteristic_set, args=(i, srcdata))
