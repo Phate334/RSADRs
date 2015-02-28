@@ -87,6 +87,10 @@ def find_characteristic_set(ctype, data,
     if ctype < 1 or ctype > 6:
         raise AttributeError("bad input, please check the type define.")
     characteristic, attribute = CHARACTERISTIC_TYPE[ctype]
+    if characteristic == "similarity":
+        char_method = similarity
+    elif characteristic == "tolerance":
+        char_method = tolerance
     print(characteristic + "_" + attribute + "("+str(len(data))+")")
     total = len(data) * len(data)
     ks = data.keys()
