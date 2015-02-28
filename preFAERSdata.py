@@ -79,6 +79,24 @@ def merge_data():
     tables_queue.join()
 
 
+def output_data():
+    """output database to txt file.
+    1.isr data by season.
+    2.total data.
+    """
+    # output ever isr by season
+    with pyodbc.connect(connect_information, database=source_database) as con:
+        with con.cursor() as cursor:
+            rows = cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.Tables")
+            tables = [r for r, in rows]
+        for t in tables:
+            pass
+    # output total data.
+    with pyodbc.connect(connect_information, database=destination_database) as con:
+        with con.cursor() as cursor:
+            pass
+
+
 if __name__ == "__main__":
     # merge_data()
     print("check parameters in file begin,and put target data into queue.")
