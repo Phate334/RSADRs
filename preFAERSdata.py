@@ -26,7 +26,7 @@ LOG_DIR = "D:\\log\\"
 class UpdateTableThread(threading.Thread):
     """push to total FAERS data table.
     Args:
-        queue: ready process source tabkles.
+        queue: ready process source table's name.
     """
     def __init__(self, queue):
         threading.Thread.__init__(self)
@@ -61,7 +61,10 @@ class UpdateTableThread(threading.Thread):
             self.queue.task_done()
 
 
-def main():
+def merge_data():
+    """
+    merge all data from source database, it define in this .py file.
+    """
     # get table name, and put in queue.
     tables_queue = Queue.Queue()
     with pyodbc.connect(connect_information, database=source_database) as con:
@@ -77,5 +80,5 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
+    # merge_data()
     print("check parameters in file begin,and put target data into queue.")
