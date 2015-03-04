@@ -70,6 +70,9 @@ def pull_data(temp, target="totalFAERS"):
                 if gender not in GENDER_TYPE:
                     gender = None
                 print(season+"\r"),
+                if isr in temp:
+                    with open(LOG_DIR+"isr_error.txt", "a") as log:
+                        log.write(str(isr)+"\n")
                 temp[isr] = (age, gender, season, drug, PT)
 
 

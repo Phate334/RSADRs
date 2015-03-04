@@ -84,19 +84,32 @@ def output_data():
     1.isr data by season.
     2.total data.
     """
-    # output ever isr by season
-    with pyodbc.connect(connect_information, database=source_database) as con:
-        with con.cursor() as cursor:
-            rows = cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.Tables")
-            tables = [r for r, in rows]
-        for t in tables:
-            pass
-    # output total data.
+    # # output ever isr by season
+    # with pyodbc.connect(connect_information, database=source_database) as con:
+    #     with con.cursor() as cursor:
+    #         rows = cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.Tables")
+    #         tables = [r for r, in rows]
+    #     for t in tables:
+    #         with con.cursor() as cursor:
+    #             rows = cursor.execute("SELECT ISR FROM %s" % t)
+    #             for r in rows:
+    #                 with open(LOG_DIR+"season\\"+t[2:], "a") as season:
+    #                     season.write(r+"\n")
+    # # output total data.
     with pyodbc.connect(connect_information, database=destination_database) as con:
         with con.cursor() as cursor:
-            pass
+            rows = cursor.execute("SELECT ISR,season,age,gender FROM totalFAERS")
+            for isr, season, age, gender in rows:
+                # isr data by season
+                with open(LOG_DIR+"season\\"+season,"a") as s:
+                    s.write(str(isr)+"\n")
+                # 12 types
+
+                # total data
+                pass
 
 
 if __name__ == "__main__":
     # merge_data()
+    output_data()
     print("check parameters in file begin,and put target data into queue.")
