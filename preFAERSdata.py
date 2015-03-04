@@ -84,29 +84,34 @@ def output_data():
     1.isr data by season.
     2.total data.
     """
-    # # output ever isr by season
-    # with pyodbc.connect(connect_information, database=source_database) as con:
-    #     with con.cursor() as cursor:
-    #         rows = cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.Tables")
-    #         tables = [r for r, in rows]
-    #     for t in tables:
-    #         with con.cursor() as cursor:
-    #             rows = cursor.execute("SELECT ISR FROM %s" % t)
-    #             for r in rows:
-    #                 with open(LOG_DIR+"season\\"+t[2:], "a") as season:
-    #                     season.write(r+"\n")
-    # # output total data.
     with pyodbc.connect(connect_information, database=destination_database) as con:
         with con.cursor() as cursor:
             rows = cursor.execute("SELECT ISR,season,age,gender FROM totalFAERS")
+            count = 0
             for isr, season, age, gender in rows:
                 # isr data by season
-                with open(LOG_DIR+"season\\"+season,"a") as s:
-                    s.write(str(isr)+"\n")
+                try:
+                    with open(LOG_DIR+"season\\"+season, "a") as s:
+                        s.write(str(isr)+"\n")
+                except IOError:
+                    with open(LOG_DIR+"season\\"+season, "w") as s:
+                        s.write(str(isr)+"\n")
                 # 12 types
-
+                try:
+                    with open(LOG_DIR+"type\\"+str(age)+"_"+str(gender), "a") as t:
+                        t.write(str(isr)+"_"+season+"\n")
+                except IOError:
+                    with open(LOG_DIR+"type\\"+str(age)+"_"+str(gender), "w") as t:
+                        t.write(str(isr)+"_"+season+"\n")
                 # total data
-                pass
+                try:
+                    with open(LOG_DIR+"total", "a") as total:
+                        total.write("%d$%s$%s$%s\n" % (isr, season, age, gender))
+                except:
+                    with open(LOG_DIR+"total", "w") as total:
+                        total.write("%d$%s$%s$%s\n" % (isr, season, age, gender))
+                count += 1
+                print(str(count)+"\r"),
 
 
 if __name__ == "__main__":
