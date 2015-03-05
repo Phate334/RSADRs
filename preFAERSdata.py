@@ -107,7 +107,7 @@ def output_data():
                 try:
                     with open(LOG_DIR+"total", "a") as total:
                         total.write("%d$%s$%s$%s\n" % (isr, season, age, gender))
-                except:
+                except IOError:
                     with open(LOG_DIR+"total", "w") as total:
                         total.write("%d$%s$%s$%s\n" % (isr, season, age, gender))
                 count += 1
