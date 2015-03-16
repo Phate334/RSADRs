@@ -19,11 +19,14 @@ LOG_DIR = "D:\\log\\"
 
 def do(in_drug, in_pts, in_ages=None, in_genders=None):
     output = {}
+    count = 0
     with pyodbc.connect(connect_information, database="RSADRs") as con:
         cursor = con.cursor()
         rows = cursor.execute("SELECT season,age,gender,drug,PT FROM totalFAERS")
         for season, age, gender, drug, PT in rows:  # list all data.
             target_season = output.setdefault(season, [0, 0, 0, 0])
+            count += 1
+            print(str(count)+"\r"),
             if in_ages is not None and age not in in_ages:
                 continue
             if in_genders is not None and gender == in_genders:
@@ -33,10 +36,10 @@ def do(in_drug, in_pts, in_ages=None, in_genders=None):
             flag_d = False
             flag_p = False
             for d in in_drug:
-                if d in case_drug:
+                if d.upper() in case_drug:
                     flag_d = True
             for p in in_pts:
-                if p in case_pt:
+                if p.upper() in case_pt:
                     flag_p = True
             # classify this cass in 2*2 contingency table
             if flag_d:
@@ -52,7 +55,7 @@ def do(in_drug, in_pts, in_ages=None, in_genders=None):
         cursor.close()
     seasons = output.keys()
     seasons.sort()
-    with open("%ssearch\\%s_%s.txt" % (LOG_DIR, in_drug[0], in_pts[0]), "w") as output_file:
+    with open("%ssearch\\%s_%s.txt" % (LOG_DIR, "&".join(in_drug), "&".join(in_pts)), "w") as output_file:
         for s in seasons:
             output_file.write(s)
             for i in range(4):
