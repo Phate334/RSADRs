@@ -99,10 +99,10 @@ def output_data():
                 # 12 types
                 try:
                     with open(LOG_DIR+"type\\"+str(age)+"_"+str(gender), "a") as t:
-                        t.write("%d_%d_%s\n" % (str(ID), str(isr), season))
+                        t.write("%d_%d_%s\n" % (ID, isr, season))
                 except IOError:
                     with open(LOG_DIR+"type\\"+str(age)+"_"+str(gender), "w") as t:
-                        t.write("%d_%d_%s\n" % (str(ID), str(isr), season))
+                        t.write("%d_%d_%s\n" % (ID, isr, season))
                 # total data
                 try:
                     with open(LOG_DIR+"total", "a") as total:
