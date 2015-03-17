@@ -21,9 +21,8 @@ from fu_timer import timer_seconds
 connect_information = "Trusted_Connection=yes;driver={SQL Server};server=localhost"
 source_database = "LAN_PREDATA"
 destination_database = "RSADRs"
-CREATE_SET_TABLE = "CREATE TABLE %s (ISR bigint,CASES varchar(max));"
-CREATE_TOTAL_TABLE = "CREATE TABLE %s " \
-                     "(ISR bigint,age varchar(10),gender varchar(10),drug varchar(max),PT varchar(max))"
+CREATE_SET_TABLE = "CREATE TABLE %s (ID int,CASES varchar(max));"
+CREATE_CONFIG_TABLE = "CREATE TABLE config"
 AGE_TYPE = ["~5", "18~60", "60~"]
 GENDER_TYPE = ["Male", "Female"]
 LOG_DIR = "D:\\log\\"
@@ -45,16 +44,12 @@ CHARACTERISTIC_TYPE = {SIMILARITY_GLOBAL: ("similarity", "global"),
 def create_table():  # Create table
     with pyodbc.connect(connect_information, database=destination_database) as con:
         with con.cursor() as cursor:
-            cursor.execute(CREATE_SET_TABLE % "similarity_global")
-            cursor.execute(CREATE_SET_TABLE % "similarity_age")
-            cursor.execute(CREATE_SET_TABLE % "similarity_gender")
-            cursor.execute(CREATE_SET_TABLE % "tolerance_global")
-            cursor.execute(CREATE_SET_TABLE % "tolerance_age")
-            cursor.execute(CREATE_SET_TABLE % "tolerance_gender")
-            cursor.execute(CREATE_TOTAL_TABLE % "totalFAERS")
-            cursor.commit()
+            for i in CHARACTERISTIC_TYPE:
+                cursor.execute(CREATE_SET_TABLE % "_".join(CHARACTERISTIC_TYPE[i]))
+                cursor.commit()
 
 
+@timer_seconds
 def pull_data(temp, target="totalFAERS"):
     """pull data from database to dictionary.
     Args:
@@ -63,19 +58,19 @@ def pull_data(temp, target="totalFAERS"):
     """
     with pyodbc.connect(connect_information, database=destination_database) as con:
         with con.cursor() as cursor:
-            rows = cursor.execute("SELECT ISR,season,age,gender,drug,PT FROM %s" % target)
-            for isr, season, age, gender, drug, PT in rows:
+            rows = cursor.execute("SELECT ID,ISR,season,age,gender,drug,PT FROM %s" % target)
+            for ID, isr, season, age, gender, drug, PT in rows:
                 if age not in AGE_TYPE:
                     age = None
                 if gender not in GENDER_TYPE:
                     gender = None
                 print(season+"\r"),
-                temp[isr] = (age, gender, season, drug, PT)
+                temp[ID] = (isr, age, gender, season, drug, PT)
 
 
-@timer_seconds
 def find_characteristic_set(ctype, data,
-                            connect_info=connect_information, db=destination_database, src_table="totalFAERS"):
+                            connect_info=connect_information, db=destination_database, src_table="totalFAERS",
+                            start_id=0):
     """calculating characteristic set.
     This method is calculating every case y and other case x which accord the relationship.
     Args:
