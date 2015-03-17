@@ -81,40 +81,40 @@ def merge_data():
 
 def output_data():
     """output database to txt file.
-    1.isr data by season.
+    1.custom id data by season.
     2.total data.
     """
     with pyodbc.connect(connect_information, database=destination_database) as con:
         with con.cursor() as cursor:
-            rows = cursor.execute("SELECT ISR,season,age,gender FROM totalFAERS")
+            rows = cursor.execute("SELECT ID,ISR,season,age,gender FROM totalFAERS")
             count = 0
-            for isr, season, age, gender in rows:
-                # isr data by season
+            for ID, isr, season, age, gender in rows:
+                # ID by season
                 try:
                     with open(LOG_DIR+"season\\"+season, "a") as s:
-                        s.write(str(isr)+"\n")
+                        s.write(str(ID)+"\n")
                 except IOError:
                     with open(LOG_DIR+"season\\"+season, "w") as s:
-                        s.write(str(isr)+"\n")
+                        s.write(str(ID)+"\n")
                 # 12 types
                 try:
                     with open(LOG_DIR+"type\\"+str(age)+"_"+str(gender), "a") as t:
-                        t.write(str(isr)+"_"+season+"\n")
+                        t.write("%d_%d_%s\n" % (str(ID), str(isr), season))
                 except IOError:
                     with open(LOG_DIR+"type\\"+str(age)+"_"+str(gender), "w") as t:
-                        t.write(str(isr)+"_"+season+"\n")
+                        t.write("%d_%d_%s\n" % (str(ID), str(isr), season))
                 # total data
                 try:
                     with open(LOG_DIR+"total", "a") as total:
-                        total.write("%d$%s$%s$%s\n" % (isr, season, age, gender))
+                        total.write("%d$%d$%s$%s$%s\n" % (ID, isr, season, age, gender))
                 except IOError:
                     with open(LOG_DIR+"total", "w") as total:
-                        total.write("%d$%s$%s$%s\n" % (isr, season, age, gender))
+                        total.write("%d$%d$%s$%s$%s\n" % (ID, isr, season, age, gender))
                 count += 1
                 print(str(count)+"\r"),
 
 
 if __name__ == "__main__":
     # merge_data()
-    output_data()
+    # output_data()
     print("check parameters in file begin,and put target data into queue.")
