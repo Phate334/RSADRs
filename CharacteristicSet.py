@@ -118,7 +118,7 @@ def find_characteristic_set(ctype, data,
                 with open(LOG_DIR+"type\\"+case_x, "r") as f:
                     for case in f:
                         case = case.split("_")
-                        predata[attr_y]["S_"+case[2]].append(case[0])
+                        predata[case_y]["S_"+case[2]].append(case[0])
     with open(LOG_DIR+"\\"+"_".join(CHARACTERISTIC_TYPE[ctype]), "w") as log:
         log.write(str(predata))
     print("start process"+characteristic + "_" + attribute)
