@@ -120,13 +120,13 @@ def find_characteristic_set(ctype, data,
                         case = case.split("_")
                         predata[case_y]["S_"+case[2].replace("\n", "")].append(case[0])
 
-    with open(LOG_DIR+"\\"+"_".join(CHARACTERISTIC_TYPE[ctype]), "w") as log:
-        log.write(str(predata))
+    # start scan all data.
     print("start process"+characteristic + "_" + attribute)
-    total = len(data) * len(data)
-    ks = data.keys()
-    count = 0
-    for y in ks:
+    keys = data.keys()
+    keys.sort()
+    if start_id not in keys:
+        start_id = keys[0]
+    for y in range(keys.index(start_id), len(keys)):
         pass
 
 
