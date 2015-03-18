@@ -13,6 +13,7 @@
 # Licence:        <your licence>
 # -------------------------------------------------------------------------------
 from multiprocessing import Manager, Process
+import os
 import pyodbc
 
 from fu_timer import timer_seconds
@@ -21,8 +22,8 @@ from fu_timer import timer_seconds
 connect_information = "Trusted_Connection=yes;driver={SQL Server};server=localhost"
 source_database = "LAN_PREDATA"
 destination_database = "RSADRs"
-CREATE_SET_TABLE = "CREATE TABLE %s (ID int,CASES varchar(max));"
-CREATE_CONFIG_TABLE = "CREATE TABLE config"
+CREATE_SET_TABLE = "CREATE TABLE %s (ID int,%s);"
+CREATE_CONFIG_TABLE = "CREATE TABLE config (NAME varchar(30),VALUE int)"
 AGE_TYPE = ["~5", "18~60", "60~"]
 GENDER_TYPE = ["Male", "Female"]
 LOG_DIR = "D:\\log\\"
@@ -42,10 +43,17 @@ CHARACTERISTIC_TYPE = {SIMILARITY_GLOBAL: ("similarity", "global"),
 
 
 def create_table():  # Create table
+    with pyodbc.connect(connect_information, database=source_database) as con:
+        with con.cursor() as cursor:
+            rows = cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.Tables")
+            tables = [r+" varchar(max)" for r, in rows]
+            tables.sort()
+
     with pyodbc.connect(connect_information, database=destination_database) as con:
+        # create output table and config.
         with con.cursor() as cursor:
             for i in CHARACTERISTIC_TYPE:
-                cursor.execute(CREATE_SET_TABLE % "_".join(CHARACTERISTIC_TYPE[i]))
+                cursor.execute(CREATE_SET_TABLE % ("_".join(CHARACTERISTIC_TYPE[i]), ",".join(tables)))
                 cursor.commit()
 
 
@@ -69,7 +77,7 @@ def pull_data(temp, target="totalFAERS"):
 
 
 def find_characteristic_set(ctype, data,
-                            connect_info=connect_information, db=destination_database, src_table="totalFAERS",
+                            connect_info=connect_information, db=destination_database,
                             start_id=0):
     """calculating characteristic set.
     This method is calculating every case y and other case x which accord the relationship.
@@ -78,21 +86,47 @@ def find_characteristic_set(ctype, data,
                it's about characteristic(similarity or tolerance) and attribute (global or local).
                In local case,we focus on two attributes-age and gender,so there are three cases need to consider.
                So we have six cases need to process.It's all define in this py file first.
+        data:  all case which you want to process.it's a dictionary,the key is custom id.
+        start_id: if work is stopped,can start from this id.
     """
     if ctype < 1 or ctype > 6:
         raise AttributeError("bad input, please check the type define.")
+    # Initialization
     characteristic, attribute = CHARACTERISTIC_TYPE[ctype]
     if characteristic == "similarity":
         char_method = similarity
     elif characteristic == "tolerance":
         char_method = tolerance
-    print(characteristic + "_" + attribute + "("+str(len(data))+")")
+    attr_type = [types for types in os.listdir(LOG_DIR+"\\type")]  # all attribute combination
+    seasons = ["S_"+season for season in os.listdir(LOG_DIR+"\\season")]
+    predata = {}  # Preparing all data which want insert to database,ex.{"~5_Female":{"S_04Q1":[],...},...}
+    for attr in attr_type:
+        predata[attr] = dict(zip(seasons, [[] for i in range(len(seasons))]))
+    for case_y in attr_type:
+        attr_y = case_y.split("_")
+        for case_x in attr_type:
+            attr_x = case_x.split("_")
+            flag = False
+            if attribute == "global":
+                flag = char_method(attr_y, attr_x)  # ex. ["~5","Male"]
+            elif attribute == "age":
+                flag = char_method(attr_y[:1], attr_x[:1])  # ex.["~5"]
+            elif attribute == "gender":
+                flag = char_method(attr_y[1:], attr_x[1:])  # ex.["Male"]
+            # predata which will put into database
+            if flag:
+                with open(LOG_DIR+"\\type\\"+case_x, "r") as f:
+                    for case in f:
+                        case = case.split("_")
+                        predata[attr_y][case[2]].append(case[0])
+    with open(LOG_DIR+"\\"+"_".join(CHARACTERISTIC_TYPE[ctype]), "w") as log:
+        log.write(str(predata))
+    print("start process"+characteristic + "_" + attribute)
     total = len(data) * len(data)
     ks = data.keys()
     count = 0
     for y in ks:
-        for x in ks:
-            count += 1
+        pass
 
 
 def similarity(y_attr, x_attr):
