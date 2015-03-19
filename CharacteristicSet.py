@@ -22,7 +22,7 @@ from fu_timer import timer_seconds
 connect_information = "Trusted_Connection=yes;driver={SQL Server};server=localhost"
 source_database = "LAN_PREDATA"
 destination_database = "RSADRs"
-CREATE_SET_TABLE = "CREATE TABLE %s (ID int,%s);"
+CREATE_SET_TABLE = "CREATE TABLE %s (age varchar(10),gender varchar(10),%s);"
 CREATE_CONFIG_TABLE = "CREATE TABLE config (NAME varchar(30),VALUE int)"
 AGE_TYPE = ["~5", "18~60", "60~"]
 GENDER_TYPE = ["Male", "Female"]
@@ -76,9 +76,8 @@ def pull_data(temp, target="totalFAERS"):
                 temp[ID] = (isr, age, gender, season, drug, PT)
 
 
-def find_characteristic_set(ctype, data,
-                            connect_info=connect_information, db=destination_database,
-                            start_id=0):
+def find_characteristic_set(ctype,
+                            connect_info=connect_information, db=destination_database):
     """calculating characteristic set.
     This method is calculating every case y and other case x which accord the relationship.
     Args:
@@ -117,17 +116,23 @@ def find_characteristic_set(ctype, data,
             if flag:
                 with open(LOG_DIR+"type\\"+case_x, "r") as f:
                     for case in f:
-                        case = case.split("_")
-                        predata[case_y]["S_"+case[2].replace("\n", "")].append(case[0])
+                        case = case.replace("\n", "").split("_")
+                        predata[case_y]["S_"+case[2]].append(case[0])
 
     # start scan all data.
     print("start process"+characteristic + "_" + attribute)
-    keys = data.keys()
-    keys.sort()
-    if start_id not in keys:
-        start_id = keys[0]
-    for y in range(keys.index(start_id), len(keys)):
-        pass
+    with pyodbc.connect(connect_info, database=db) as con:
+        with con.cursor() as cursor:
+            for case_type in predata.keys():
+                age, gender = case_type.split("_")
+                cursor.execute("INSERT INTO %s (age,gender) VALUE ('%s','%s')" %
+                               ("_".join(CHARACTERISTIC_TYPE[ctype]), age, gender))
+                cursor.commit()
+                for season in predata[case_type]:
+                    cursor.execute("UPDATE %s SET %s='%s' WHERE age='%s' and gender='%s'" %
+                                   ("_".join(CHARACTERISTIC_TYPE[ctype]),
+                                    season, ",".join(predata[case_type][season]), age, gender))
+                    cursor.commit()
 
 
 def similarity(y_attr, x_attr):
@@ -160,13 +165,13 @@ def tolerance(y_attr, x_attr):
 
 
 def main():
-    man = Manager()
-    srcdata = man.dict()
-    pull_data(srcdata, "test_data")
+    # man = Manager()
+    # srcdata = man.dict()
+    # pull_data(srcdata, "test_data")
     # pull_data(srcdata)
     processes = []
     for i in range(1, 7):
-        p = Process(target=find_characteristic_set, args=(i, srcdata))
+        p = Process(target=find_characteristic_set, args=(i,))
         p.start()
         processes.append(p)
     for p in processes:
