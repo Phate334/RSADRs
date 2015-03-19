@@ -125,7 +125,7 @@ def find_characteristic_set(ctype,
         with con.cursor() as cursor:
             for case_type in predata.keys():
                 age, gender = case_type.split("_")
-                cursor.execute("INSERT INTO %s (age,gender) VALUE ('%s','%s')" %
+                cursor.execute("INSERT INTO %s (age,gender) VALUES ('%s','%s')" %
                                ("_".join(CHARACTERISTIC_TYPE[ctype]), age, gender))
                 cursor.commit()
                 for season in predata[case_type]:
