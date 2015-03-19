@@ -12,7 +12,7 @@
 # Copyright:    (c) Phate 2015
 # Licence:        <your licence>
 # -------------------------------------------------------------------------------
-from multiprocessing import Manager, Process
+from multiprocessing import Process
 import os
 import pyodbc
 
@@ -120,7 +120,7 @@ def find_characteristic_set(ctype,
                         predata[case_y]["S_"+case[2]].append(case[0])
 
     # start scan all data.
-    print("start process"+characteristic + "_" + attribute)
+    print("start process "+characteristic + "_" + attribute)
     with pyodbc.connect(connect_info, database=db) as con:
         with con.cursor() as cursor:
             for case_type in predata.keys():
@@ -165,10 +165,6 @@ def tolerance(y_attr, x_attr):
 
 
 def main():
-    # man = Manager()
-    # srcdata = man.dict()
-    # pull_data(srcdata, "test_data")
-    # pull_data(srcdata)
     processes = []
     for i in range(1, 7):
         p = Process(target=find_characteristic_set, args=(i,))
