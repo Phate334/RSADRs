@@ -12,10 +12,16 @@
 import pyodbc
 
 connect_info = "Trusted_Connection=yes;driver={SQL Server};server=localhost"
+source_database = "LAN_PREDATA"
+destination_database = "RSADRs"
 
 
-def get_timeline():
-    pass
+def get_timeline(start=None, end=None):
+    with open(connect_info, database="source_database") as con:
+        with con.cursor() as cursor:
+            rows = cursor.execute("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.Tables")
+            tables = [r for r, in rows]
+    print tables
 
 
 def find(drugs, symptoms, age=None, gender=None):
@@ -25,7 +31,7 @@ def find(drugs, symptoms, age=None, gender=None):
 
 
 def main():
-    pass
+    get_timeline()
 
 
 if __name__ == "__main__":
