@@ -7,7 +7,6 @@
 #
 # Created:      2015/4/18
 # Copyright:    (c) user 2015
-# Licence:      <your licence>
 # -------------------------------------------------------------------------------
 import pyodbc
 
