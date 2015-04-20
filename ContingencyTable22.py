@@ -66,7 +66,7 @@ def find(in_drug, in_symptom, timeline, in_age=None, in_gender=None):
                 drugs = drug.split(",")
                 pts = PT.split(",")
                 result[contingency_type(in_drug, in_symptom, drugs, pts)].append(ID)
-            print("Done")
+            print("..............Done" % season)
             cursor.close()
     print("drugs:%s" % str(in_drug))
     print("symptoms:%s" % str(in_symptom))
