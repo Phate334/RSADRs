@@ -48,15 +48,14 @@ def contingency_type(in_drug, in_symptom, drugs, pts):
             return "Xd"
 
 
-def find(in_drug, in_symptom, timeline, in_age=None, in_gender=None):
+def find(in_drug, in_symptom, in_age=None, in_gender=None):
     """output contingency table.
+    all attr. are list
     """
     result = {"Xa": [], "Xb": [], "Xc": [], "Xd": []}
     with pyodbc.connect(connect_info, database=destination_database) as con:
-        for season in timeline:
-            print("search %s..." % season)
-            cursor = con.cursor()
-            rows = cursor.execute("SELECT ID,age,gender,drug,PT FROM totalFAERS WHERE season='%s'" % season[2:])
+        with con.cursor() as cursor:
+            rows = cursor.execute("SELECT ID,age,gender,drug,PT FROM totalFAERS")
             for ID, age, gender, drug, PT in rows:
                 print("%s\r" % ID),
                 if in_age and age not in in_age:
@@ -66,8 +65,6 @@ def find(in_drug, in_symptom, timeline, in_age=None, in_gender=None):
                 drugs = drug.split(",")
                 pts = PT.split(",")
                 result[contingency_type(in_drug, in_symptom, drugs, pts)].append(ID)
-            print("..............Done" % season)
-            cursor.close()
     print("drugs:%s" % str(in_drug))
     print("symptoms:%s" % str(in_symptom))
     print("a:%d\tb:%d\tc:%d\td:%d\t" %
@@ -76,9 +73,9 @@ def find(in_drug, in_symptom, timeline, in_age=None, in_gender=None):
 
 
 def main():
-    seasons = get_timeline()
-    result = find(["AVANDIA", "ROSIGLITAZONE"], ["DEATH"], seasons, in_age=["18~60", "60~"])
-    with open(LOG_DIR+"%s_%s.json" % ("AVANDIA", "DEATH"), "w") as log:
+    # seasons = get_timeline()
+    result = find(["AVANDIA", "ROSIGLITAZONE"], ["MYOCARDIAL INFARCTION"], in_age=["18~60", "60~"])
+    with open(LOG_DIR+"%s_%s.json" % ("AVANDIA", "MYOCARDIAL"), "w") as log:
         log.write(json.dumps(result))
 
 if __name__ == "__main__":
