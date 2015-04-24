@@ -79,7 +79,10 @@ def singleton(characteristic, season, input_table=None,
             rows = search.execute("SELECT ID,relation FROM DPCharacteristic WHERE ID>=%d AND ID<=%d" %
                                   (id_range[s][0], id_range[s][1]))
             for ID, relation in rows:
-                pass
+                r_set = set(relation.split(","))
+                for x in cont_table.keys():
+                    if r_set <= cont_table:
+                        pass
     con.close()
 
 
