@@ -144,7 +144,7 @@ def similarity(y_attr, x_attr):
     :return: True, if x and y have similarity relation.
     """
     for i in range(len(y_attr)):
-        if y_attr[i]:
+        if y_attr[i] != "NULL":
             if y_attr[i] != x_attr[i]:
                 return False
     return True
@@ -158,7 +158,7 @@ def tolerance(y_attr, x_attr):
     :return: True, if x and y have tolerance relation.
     """
     for i in range(len(y_attr)):
-        if y_attr[i] and x_attr[i]:
+        if y_attr[i] != "NULL" and x_attr[i] != "NULL":
             if y_attr[i] != x_attr[i]:
                 return False
     return True

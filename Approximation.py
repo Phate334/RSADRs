@@ -27,6 +27,12 @@ class RSContingencyTable:
     def add(self, target, relation):
         self.data[target].add(relation)
 
+    def get_list(self):
+        temp = {}
+        for x in self.data.keys():
+            temp[x] = list(self.data[x])
+        return temp
+
 
 def singleton(characteristic, season, input_table=None,
               in_drug=None, in_symptom=None, in_age=None, in_gender=None):
@@ -49,16 +55,20 @@ def singleton(characteristic, season, input_table=None,
     char_set = {}
     with pyodbc.connect(connect_information, database="RSADRs") as con:
         with con.cursor() as cursor:
-            rows = cursor.execute("SELECT age,gender,%s FROM %s" % (",".join(["S_"+s for s in season]), characteristic))
+            rows = cursor.execute("SELECT * FROM %s" % characteristic)
             for row in rows:
-                char_set["%s_%s" % (row[0], row[1])] = {}
-                for i in range(len(season)):
-                    char_set["%s_%s" % (row[0], row[1])][season[i]] = set(row[i+2].split(","))
-
-    print("===%s:%s===" % (characteristic, "\t".join(season)))
+                attr_type = "%s_%s" % (row[0], row[1])
+                char_set[attr_type] = set()
+                for s in row[2:]:
+                    for i in s.split(","):
+                        try:
+                            char_set[attr_type].add(int(i))
+                        except ValueError:
+                            pass
+    print("===%s===" % characteristic)
     for k in char_set.keys():
-        attr_type = char_set[k]
-        print("%s:\t%s" % (k, "\t".join([str(len(attr_type[s])) for s in season])))
+        print("%s:\t%d" % (k, len(char_set[k])))
+    """
     # check id range in every season
     id_range = {}
     with pyodbc.connect(connect_information, database="RSADRs") as con:
@@ -70,25 +80,40 @@ def singleton(characteristic, season, input_table=None,
     print("===ID range===")
     for s in season:
         print("%s:%s" % (s, str(id_range[s])))
+    """
     # building RS table
     output = {}
     con = pyodbc.connect(connect_information, database="RSADRs")
     for s in season:
+        print("RS table:%s" % s)
         output[s] = RSContingencyTable()
         with con.cursor() as search:
-            rows = search.execute("SELECT ID,relation FROM DPCharacteristic WHERE ID>=%d AND ID<=%d" %
-                                  (id_range[s][0], id_range[s][1]))
-            for ID, relation in rows:
-                r_set = set(relation.split(","))
+            rows = search.execute("""SELECT dp.ID,dp.relation,total.age,total.gender FROM DPCharacteristic as dp
+            INNER JOIN totalFAERS as total ON dp.ID=total.ID AND total.season='%s'""" % s)
+            for ID, relation, age, gender in rows:
+                r_set = set([int(i) for i in relation.split(",")]) & char_set["%s_%s" % (age, gender)]
+                print("%d:%d\r" % (ID, len(r_set))),
                 for x in cont_table.keys():
-                    if r_set <= cont_table:
-                        pass
+                    if r_set <= cont_table[x]:  # relation set is subset of X in contingency table
+                        output[s].add(x+'l', ID)
+                    if r_set & cont_table[x]:  # Intersection relation set and X in contingency table isn't empty
+                        output[s].add(x+'u', ID)
     con.close()
+    result = {}
+    for s in season:
+        result[s] = output[s].get_list()
+    return result
 
 
 def main():
-    singleton("similarity_global", ["04Q1", "04Q2", "09Q2"], input_table="D:\\log\\AVANDIA_MYOCARDIAL.json")
-
-
+    output = singleton("tolerance_age", ["04Q1"], input_table="D:\\log\\AVANDIA_MYOCARDIAL.json")
+    with open("D:\\log\\RS_AVANDIA_MYOCARDIAL_tolerance_age.json", "w") as f:
+        f.write(json.dumps(output))
+    print("===Result===")
+    output=output["04Q1"]
+    key = output.keys()
+    key.sort()
+    for x in key:
+        print("%s:%d" % (x, len(output[x])))
 if __name__ == "__main__":
     main()
