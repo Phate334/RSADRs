@@ -74,8 +74,8 @@ def find(in_drug, in_symptom, in_age=None, in_gender=None):
 
 def main():
     # seasons = get_timeline()
-    result = find(["AVANDIA", "ROSIGLITAZONE"], ["MYOCARDIAL INFARCTION"], in_age=["18~60", "60~"])
-    with open(LOG_DIR+"%s_%s.json" % ("AVANDIA", "MYOCARDIAL"), "w") as log:
+    result = find(["AVANDIA", "ROSIGLITAZONE"], ["DEATH"], in_age=["18~60", "60~"])
+    with open(LOG_DIR+"%s_%s.json" % ("AVANDIA", "DEATH"), "w") as log:
         log.write(json.dumps(result))
 
 if __name__ == "__main__":
