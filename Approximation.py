@@ -146,10 +146,10 @@ def concept(characteristic, season, input_table=None,
                 r_set = set(relation) & char_set["%s_%s" % (age, gender)]
                 print("%d:%d\r" % (ID, len(r_set))),
                 if r_set <= cont_table[x]:  # relation set is subset of X in contingency table
-                    for i in relation:
+                    for i in r_set:
                         output[s].add(x+'l', i)
                 if r_set & cont_table[x]:  # Intersection relation set and X in contingency table isn't empty
-                    for i in relation:
+                    for i in r_set:
                         output[s].add(x+'u', i)
     con.close()
     result = {}
@@ -160,17 +160,18 @@ def concept(characteristic, season, input_table=None,
 
 def main():
     season = ["04Q1"]
-    approximation = "concept"  # singleton & concept
+    approximation = "concept"   # singleton & concept
     characteristic = "tolerance"  # similarity & tolerance
-    attribute = "age"  # global & age & gender
+    attribute = "age"             # global & age & gender
 
     if approximation == "singleton":
         target_method = singleton
     elif approximation == "concept":
         target_method = concept
-    output = target_method("%s_%s" % (characteristic, attribute),season, input_table="D:\\log\\AVANDIA_MYOCARDIAL.json")
+    output = target_method("%s_%s" % (characteristic, attribute), season, input_table="D:\\log\\AVANDIA_MYOCARDIAL.json")
     # output = singleton("similarity_global", ["04Q1"],
     #                   in_drug=["AVANDIA", "ROSIGLITAZONE"], in_symptom=["DEATH"], in_age=["18~60", "60~"])
+    # output = target_method("%s_%s" % (characteristic, attribute), season, in_drug=["AVANDIA"], in_symptom=["MYOCARDIAL INFARCTION"], in_age=["18~60", "60~"])
     with open("D:\\log\\%s\\RS_AVANDIA1_%s_%s_%s.json" % (season[0], approximation, characteristic, attribute), "w") as f:
         f.write(json.dumps(output))
     print("===Result===")
