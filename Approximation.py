@@ -34,6 +34,53 @@ class RSContingencyTable:
         return temp
 
 
+def getContingencyTable(input_table=None, in_drug=None, in_symptom=None, in_age=None, in_gender=None):
+    """2*2列聯表，在intput_table給定事先完成的JSON檔路徑，或輸入後方四個參數求得。
+    :param input_table:JSON檔路徑
+    :param in_drug:藥名，list
+    :param in_symptom:不良反應，list
+    :param in_age:年齡(~5、18~60、60~)，list
+    :param in_gender:性別(Female、Male、None)
+    :return:字典物件，包含a、b、c、d四個key，每個set裡包含其符合的id。
+    """
+    if input_table:
+        with open(input_table, "r") as f:
+            cont_table = json.loads(f.read())
+    else:
+        cont_table = find(in_drug, in_symptom, in_age, in_gender)
+    print("===contingency table===")
+    print("Xa:%d\tXb:%d\tXc:%d\tXd:%d\t" %
+          (len(cont_table["Xa"]), len(cont_table["Xb"]), len(cont_table["Xc"]), len(cont_table["Xd"])))
+    return cont_table
+
+
+def getCharacteristicSet(charact, attr):
+    """從資料庫中抓取事先建立好的age、gender的cube。
+    :param charact: "similarity"或"tolerance"
+    :param attr: "age"或"gender"或"global"
+    :return: 字典物件，每個age與gender的組合。
+    """
+    if charact not in characteristic_type or attr not in attribute_type:
+        raise AttributeError("ERROR:characteristic set")
+    char_set = {}
+    with pyodbc.connect(connect_information, database="RSADRs") as con:
+        with con.cursor() as cursor:
+            rows = cursor.execute("SELECT * FROM %s" % characteristic)
+            for row in rows:
+                attr_type = "%s_%s" % (row[0], row[1])
+                char_set[attr_type] = set()
+                for s in row[2:]:
+                    for i in s.split(","):
+                        try:
+                            char_set[attr_type].add(int(i))
+                        except ValueError:
+                            pass
+    print("===%s===" % characteristic)
+    for k in char_set.keys():
+        print("%s:\t%d" % (k, len(char_set[k])))
+    return char_set
+
+
 def singleton(characteristic, season, input_table=None,
               in_drug=None, in_symptom=None, in_age=None, in_gender=None):
     # get contingency table.
@@ -168,7 +215,7 @@ def main():
         target_method = singleton
     elif approximation == "concept":
         target_method = concept
-    output = target_method("%s_%s" % (characteristic, attribute), season, input_table="D:\\log\\AVANDIA_MYOCARDIAL.json")
+    output = target_method("%s_%s" % (characteristic, attribute), season, input_table="H:\\AVANDIA_MYOCARDIAL.json")
     # output = singleton("similarity_global", ["04Q1"],
     #                   in_drug=["AVANDIA", "ROSIGLITAZONE"], in_symptom=["DEATH"], in_age=["18~60", "60~"])
     # output = target_method("%s_%s" % (characteristic, attribute), season, in_drug=["AVANDIA"], in_symptom=["MYOCARDIAL INFARCTION"], in_age=["18~60", "60~"])

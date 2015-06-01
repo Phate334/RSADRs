@@ -14,7 +14,7 @@ import json
 connect_info = "Trusted_Connection=yes;driver={SQL Server};server=localhost"
 source_database = "LAN_PREDATA"
 destination_database = "RSADRs"
-LOG_DIR = "D:\\log\\"
+LOG_DIR = "H:\\"
 
 
 def get_timeline(start=None, end=None):
@@ -55,7 +55,7 @@ def find(in_drug, in_symptom, in_age=None, in_gender=None):
     result = {"Xa": [], "Xb": [], "Xc": [], "Xd": []}
     with pyodbc.connect(connect_info, database=destination_database) as con:
         with con.cursor() as cursor:
-            rows = cursor.execute("SELECT ID,age,gender,drug,PT FROM totalFAERS")
+            rows = cursor.execute("SELECT ID,age,gender,drug,PT FROM test_data")
             for ID, age, gender, drug, PT in rows:
                 print("%s\r" % ID),
                 if in_age and age not in in_age:
@@ -74,8 +74,8 @@ def find(in_drug, in_symptom, in_age=None, in_gender=None):
 
 def main():
     # seasons = get_timeline()
-    result = find(["AVANDIA", "ROSIGLITAZONE"], ["DEATH"], in_age=["18~60", "60~"])
-    with open(LOG_DIR+"%s_%s.json" % ("AVANDIA", "DEATH"), "w") as log:
+    result = find(["AVANDIA", "ROSIGLITAZONE"], ["MYOCARDIAL INFARCTION"], in_age=["18~60", "60~"])
+    with open(LOG_DIR+"%s_%s.json" % ("AVANDIA", "MYOCARDIAL"), "w") as log:
         log.write(json.dumps(result))
 
 if __name__ == "__main__":
