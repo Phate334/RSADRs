@@ -114,7 +114,46 @@ def output_data():
                 print(str(count)+"\r"),
 
 
+def build_dp_characteristic():
+    con = pyodbc.connect(connect_information, database=destination_database)
+    # get number of case
+    with con.cursor() as cursor:
+        id_count, = cursor.execute("select count(id) from total_sort").fetchone()
+    ids = set(range(id_count))
+    print("number of cases:%d" % len(ids))
+    # check non-process case
+    with con.cursor() as cursor:
+        rows = cursor.execute("SELECT id FROM DPCharacteristic")
+        preids = set([i for i, in rows])
+    print("find %d cases" % len(preids))
+    ids = list(ids-preids)
+    print("%d cases ready to process" % len(ids))
+    # insert data
+    same_dp_case = "SELECT ID FROM total_sort " \
+                   "WHERE drug = (select drug from total_sort where ID=%d) AND " \
+                   "PT = (select PT from total_sort where ID=%d)"
+    insert_same_case = "INSERT INTO DPCharacteristic (ID,relation)" \
+                       "VALUES (%d,'%s')"
+    ids.sort()
+    copy_ids = ids[:]
+    for i in ids:
+        if i in copy_ids:  # find the case which have same drug and PT.
+            with con.cursor() as cursor:
+                rows = cursor.execute(same_dp_case % (i, i))
+                same_case = [i for i, in rows]
+            with con.cursor() as cursor:
+                for target in same_case:
+                    cursor.execute(insert_same_case % (target, ",".join([str(s) for s in same_case])))
+                    copy_ids.remove(target)
+                cursor.commit()
+            print("ID:%d,same case :%d,total:%d" % (i, len(same_case), len(copy_ids)))
+    with con.cursor() as cursor:
+        rows = cursor.execute("SELECT count(ID) FROM DPCharacteristic")
+        print("\n======\nTOTAL DPCharacteristic number %d\n======" % (rows.fetchone(),))
+    con.close()
+
 if __name__ == "__main__":
     # merge_data()
     # output_data()
+    build_dp_characteristic()
     print("check parameters in file begin,and put target data into queue.")
