@@ -114,12 +114,15 @@ def output_data():
                 print(str(count)+"\r"),
 
 
-def build_dp_characteristic():
+def build_dp_characteristic(target_list=None):
     con = pyodbc.connect(connect_information, database=destination_database)
     # get number of case
-    with con.cursor() as cursor:
-        id_count, = cursor.execute("select count(id) from total_sort").fetchone()
-    ids = set(range(id_count))
+    if target_list:
+        ids = set(target_list)
+    else:
+        with con.cursor() as cursor:
+            id_count, = cursor.execute("select count(id) from total_sort").fetchone()
+        ids = set(range(id_count))
     print("number of cases:%d" % len(ids))
     # check non-process case
     with con.cursor() as cursor:
@@ -144,12 +147,16 @@ def build_dp_characteristic():
             with con.cursor() as cursor:
                 for target in same_case:
                     cursor.execute(insert_same_case % (target, ",".join([str(s) for s in same_case])))
-                    copy_ids.remove(target)
+                    try:
+                        copy_ids.remove(target)
+                    except ValueError:
+                        pass
                 cursor.commit()
             print("ID:%d,same case :%d,total:%d" % (i, len(same_case), len(copy_ids)))
     with con.cursor() as cursor:
         rows = cursor.execute("SELECT count(ID) FROM DPCharacteristic")
-        print("\n======\nTOTAL DPCharacteristic number %d\n======" % (rows.fetchone(),))
+        num, = rows.fetchone()
+        print("\n======\nTOTAL DPCharacteristic number %d\n======" % num)
     con.close()
 
 if __name__ == "__main__":

@@ -208,7 +208,7 @@ def concept(characteristic, season, input_table=None,
 def main():
     season = ["04Q2"]
     approximation = "singleton"   # singleton & concept
-    characteristic = "tolerance"  # similarity & tolerance
+    characteristic = "similarity"  # similarity & tolerance
     attribute = "global"             # global & age & gender
 
     if approximation == "singleton":
